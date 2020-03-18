@@ -9,21 +9,22 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Vector;
 
-// Флаг отвечающий за ожидание и обработку
+// Р¤Р»Р°Рі СЂР°Р±РѕС‚С‹ РґРѕРї. РїРѕС‚РѕРєРѕРІ (ClientThread)
 enum ClientThreadStatus{
     Waiting,
     Running,
     Shutting
 }
 
-// Серверный потом обрабатывает подключения
+// РЎРµСЂРІРµСЂРЅС‹Р№ РїРѕС‚РѕРє, РѕС‚РІРµС‡Р°РµС‚ Р·Р° РѕР±СЂР°Р±РѕС‚РєСѓ 
+// РїРѕРґРєР»СЋС‡РµРЅРёР№ Рё РїРµСЂРµРґР°С‡Сѓ СѓРїСЂР°РІР»РµРЅРёСЏ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рј РїРѕС‚РѕРєР°Рј (ClientThread)
 public class ServerThread extends Thread {
-    private Vector<Integer> free_threads = null; // Индексы свободных потоков
-    ClientThread[] clientThreads = null; // Потоки для обработки подключений
+    private Vector<Integer> free_threads = null; // РњР°СЃСЃРёРІ СЃРІРѕР±РѕРґРЅС‹С… РїРѕС‚РѕРєРѕРІ 
+    ClientThread[] clientThreads = null; // РњР°СЃСЃРёРІ РїРѕС‚РѕРєРѕРІ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё РїРѕРґРєР»СЋС‡РµРЅРёР№
 
-    private ServerSocket serverSocket = null; // "Гнездо" сервера - к нему подключаются клиенты
-    boolean running = false; // Флаг цикла обрабоки (работы сервера): true - работает, false - выключен
-
+    private ServerSocket serverSocket = null; // РљР°РЅР°Р», Рє РєРѕС‚РѕСЂРѕРјСѓ РїРѕРґРєР»СЋС‡Р°СЋС‚СЃСЏ РєР»РёРµРЅС‚С‹
+    boolean running = false; // Р¤Р»Р°Рі СЂР°Р±РѕС‚С‹ СЃРµСЂРІРµСЂР°: true - Р·Р°РїСѓС‰РµРЅ, false - РѕС‚РєР»СЋС‡С‘РЅ
+    
     @Override
     public void run(){
         running = true;
@@ -31,38 +32,38 @@ public class ServerThread extends Thread {
         try{
         	log("Binding...");
             
-            serverSocket = new ServerSocket(Main.port, 10, Main.ip); // Создание сервера, backlog - размер очереди ожидания обработки подключения
-            serverSocket.setSoTimeout(500); // Установка ожидания подключения клиента (в миллисекундах)
+            serverSocket = new ServerSocket(Main.port, 10, Main.ip); // РџРѕРґРєР»СЋС‡РµРЅРёРµ СЃРµСЂРІРµСЂР°, backlog - РѕС‡РµСЂРµРґСЊ РѕР¶РёРґР°СЋС‰РёР№ РѕР±СЂР°Р±РѕС‚РєРё РєР»РёРµРЅС‚РѕРІ
+            serverSocket.setSoTimeout(500); // РЈСЃС‚Р°РЅРѕРІРєР° РІСЂРµРјРµРЅРё РѕР¶РёРґР°РЅРёСЏ РїРѕРґРєР»СЋС‡РµРЅРёСЏ (РІ РјРёР»Р»РёСЃРµРєСѓРЅРґР°С…)
 
             free_threads = new Vector<>(connectionsLimit);      	//
             clientThreads = new ClientThread[connectionsLimit]; 	//
-            for (int i = 0; i < connectionsLimit; i++){         	// Создание потоков
-                clientThreads[i] = new ClientThread(i);             // для обработки
-                clientThreads[i].start();                           // подключений
+            for (int i = 0; i < connectionsLimit; i++){         	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+                clientThreads[i] = new ClientThread(i);             // пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+                clientThreads[i].start();                           // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 free_threads.add(i);                                //
             }                                                       //
             
             log("Success");
             log("Waiting for connections");
-            // Цикл обработки подключений
+            // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             while (running){
             	
                 try {
-                    Socket client = serverSocket.accept(); // Ожидание подключений (блокирует поток)
+                    Socket client = serverSocket.accept(); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ)
                     log("Connected");
 
                     try{
-                        int last = free_threads.size() - 1;         // Получение свободного
-                        int index = free_threads.remove(last);      // потока и передача
-                        clientThreads[index].handle(client);        // ему управления клиентом
+                        int last = free_threads.size() - 1;         // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+                        int index = free_threads.remove(last);      // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+                        clientThreads[index].handle(client);        // пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                     }
                     catch (ArrayIndexOutOfBoundsException e){
-                        client.close(); // Отключение клиента, если свободного потока нет
+                        client.close(); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ
                     }
                     log("Handled");
                 }
                 catch (SocketTimeoutException timeout) {
-                	continue; // Исключение из-за долгого ожидания подключений - продолжение ожидания
+                	continue; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ-пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 }
                 catch (IOException e){
                 	log(e.toString());
@@ -70,32 +71,32 @@ public class ServerThread extends Thread {
                 }
             }
         }
-        catch(IOException e){ // Ошибка при создании сервера
+        catch(IOException e){ // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         	log(e.toString());
         }
         
         try {						//
-			serverSocket.close();	// Отключение
-		} catch (Exception e) {		// возможности
-			e.printStackTrace();	// подключений
+			serverSocket.close();	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+		} catch (Exception e) {		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+			e.printStackTrace();	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 		}							//
         
         running = false;
         log("ServerThread stopped");
     }
     
-    // Клиентский поток - поток для работы с подключённым клиентом
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     public class ClientThread extends Thread {
     	private String login;
     	private String password;
     	
-        private int ID; // номер потока в массиве потоков (ServerThread.clientThreads)
-        private String ID_str; // номер в виде строки (для удобства)
+        private int ID; // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ (ServerThread.clientThreads)
+        private String ID_str; // пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
 
-        private Socket socket; // гнёздо - отвечает за подключение к серверу
+        private Socket socket; // пїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         private ClientServerChannel channel;
         
-        private ClientThreadStatus status = ClientThreadStatus.Waiting; // флаг отвечающий за ожидание и обработку
+        private ClientThreadStatus status = ClientThreadStatus.Waiting; // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
         byte task;
         Integer[] token = new Integer[tokenSize];; 
@@ -110,87 +111,87 @@ public class ServerThread extends Thread {
             log("ClientThread " + ID_str + " is waiting");
             while (status != ClientThreadStatus.Shutting){
             	System.out.print("");
-            	if (status == ClientThreadStatus.Running) { //Действия с подключённым клиентом
+            	if (status == ClientThreadStatus.Running) { //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             		 log("ClientThread " + ID_str + " is running");
                      try {
-                     	channel = new ClientServerChannel(socket); // Создание канала для обмена данными
-                     	task = channel.readByte(); // Получение задачи
+                     	channel = new ClientServerChannel(socket); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+                     	task = channel.readByte(); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
                      	
                      	
                      	//									//
-                     	// | Обработка и выполнение задач | //
+                     	// | пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ | //
                      	// v							  v	//
                      	
-                     	if (task == 2) { // Задача - расчёи
+                     	if (task == 2) { // пїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅ
                      		
                      		for (int i = 0; i < tokenSize; i++) {	//
-                     			token[i] = channel.readInt();		// Получение токенов
+                     			token[i] = channel.readInt();		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                      		}										//
                      		
-                     		// Получение данных TODO
+                     		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ TODO
                      		//
                      		
-                     		int index = Main.data.searchToken(token); // Поиск токенов
+                     		int index = Main.data.searchToken(token); // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                      		
                      		if (index != -1) {
-                     			channel.writeByte(1); // Отправка положительного ответа
+                     			channel.writeByte(1); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
                      			
-                     			// Расчёт TODO
+                     			// пїЅпїЅпїЅпїЅпїЅпїЅ TODO
                      		}
                      		else {
-                     			channel.writeByte(0); // Отправка отрицательного ответа
+                     			channel.writeByte(0); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
                      		}
                      	}
-                     	else { // Задачи - вход, регистрация (0/1 соответственно)
+                     	else { // пїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (0/1 пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
                      		
-                     		token = Main.tokenGen.getTokens(); // Генерация токенов
+                     		token = Main.tokenGen.getTokens(); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                      		
                      		login = channel.readString();
                      		password = channel.readString();
                      		
-                     		int index; // Результат входа/регистрации
+                     		int index; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                      		
                      		if (task == 0) {
-                     			index = Main.data.sign_in(login, password); // Вход
+                     			index = Main.data.sign_in(login, password); // пїЅпїЅпїЅпїЅ
                      		}
                      		else {
-                     			index = Main.data.sign_up(login, password, token); // Регистрация
+                     			index = Main.data.sign_up(login, password, token); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                      		}
                      		
                      		if (index != -1) {
-                     			channel.writeByte(1); // Отправка положительного ответа
+                     			channel.writeByte(1); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
                      			
                      			for (int token: token) {		//
-                     				channel.writeInt(token);	// Отправка токенов
+                     				channel.writeInt(token);	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                      			}								//
                      		}
                      		else {
-                     			channel.writeByte(0); // Отправка отрицательного ответа
+                     			channel.writeByte(0); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
                      		}
                      	}
                      	
-                     	channel.flush(); // Ожидание отправки всех данных
+                     	channel.flush(); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
                      }
                      catch (IOException e){
                          e.printStackTrace();
                      }
-                     status = ClientThreadStatus.Waiting; // Статус ожидания
+                     status = ClientThreadStatus.Waiting; // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
                      log("ClientThread " + ID_str + " is waiting");
                      
-                     free_threads.add(ID); // Добавление потока в массив свободных
+                     free_threads.add(ID); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             	}
             }
             log("ClientThread " + ID_str + " is shutting down");
         }
 
-        // Получение клиента и запуск обработки
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         void handle(Socket client){
             this.socket = client;
             status = ClientThreadStatus.Running;
         }
 
-        // Закрытие потока
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         void close(){
             log("Closing clientThread " + ID_str);
             status = ClientThreadStatus.Shutting;

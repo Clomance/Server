@@ -6,12 +6,12 @@ import java.io.IOException;
 import java.net.Socket;
 
 public class ClientServerChannel {
-	DataOutputStream output;
-    DataInputStream input;
+	private DataOutputStream output;
+    private DataInputStream input;
 
     ClientServerChannel(Socket socket) throws IOException{
-        output = new DataOutputStream(socket.getOutputStream());    // Получение каналов
-        input = new DataInputStream(socket.getInputStream());       // связи
+        output = new DataOutputStream(socket.getOutputStream());    // РџРѕР»СѓС‡РµРЅРёРµ РєР°РЅР°Р»РѕРІ
+        input = new DataInputStream(socket.getInputStream());       // СЃРІСЏР·Рё
     }
 
     void writeByte(int b) throws IOException{
