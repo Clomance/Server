@@ -7,27 +7,29 @@ import java.util.Scanner;
 import main.ServerThread.ClientThread;
 
 public class Main {
-	static InetAddress ip; // Адрес сервера
-	static int port = 8080; // Порт сервера
+	static InetAddress address; // РђРґСЂРµСЃ СЃРµСЂРІРµСЂР°
+	static int port = 8080; // РџРѕСЂС‚ СЃРµСЂРІРµСЂР°
 	
-	static ServerThread serverThread; // Главный поток сервера (текущий поток - консоль)
-	static int connectionsLimit = 5; // Максимальное одновременных количество подключений
+	static ServerThread serverThread; // РЎРµСЂРІРµСЂРЅС‹Р№ РїРѕС‚РѕРє (С‚РµРєСѓС‰РёР№ РїРѕС‚РѕРє - РєРѕРЅСЃРѕР»СЊ)
+	static int connectionsLimit = 5; // РњР°РєСЃРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїРѕРґРєР»СЋС‡РµРЅРёР№
 	
-	final public static int tokenSize = 2; // Размер токенов
-	static TokenGenerator tokenGen = new TokenGenerator(); // Генератор токенов
+	final public static int tokenSize = 2; // Р Р°Р·РјРµСЂ С‚РѕРєРµРЅР°
+	static TokenGenerator tokenGen = new TokenGenerator(); // Р“РµРЅРµСЂР°С‚РѕСЂ С‚РѕРєРµРЅРѕРІ
 
-	static Data data = new Data(); // Данные пользователей
+	static Data data = new Data(); // Р”Р°РЅРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
 	
 	
 	public static void main(String[] args) {
 		try {
-			ip = InetAddress.getByName("192.168.0.100");
+			address = InetAddress.getByName("192.168.0.100");
 		} catch (UnknownHostException ignored) {}
 		
 		Scanner scan = new Scanner(System.in);
 		String line = null;
 		
 		log("Server Console");
+		
+		// Р¦РёРєР» РєРѕРЅСЃРѕР»Рё
 		while (true) {
 			try {
 				line = scan.nextLine().trim();
@@ -42,29 +44,29 @@ public class Main {
 							break;
 							
 						case "start":
-							if (serverThread != null && serverThread.running) {						//
-								log("Error: server is already running");	// Игнорирование команды
-								continue;									// при работающем сервере
-							}												//
+							if (serverThread != null && serverThread.running) {	//
+								log("Error: server is already running");		// РРіРЅРѕСЂРёРІР°РЅРёРµ РєРѕРјР°РЅРґС‹,
+								continue;										// РµСЃР»Рё СЃРµСЂРІРµСЂ Р·Р°РїСѓС‰РµРЅ
+							}													//
 							serverThread = new ServerThread();
 							serverThread.start();
 							break;
 							
-						// Настройка 
+						// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 
 						case "set":
 							if (len > 1) {
 								
-								if (serverThread != null && serverThread.running) {				//
-									log("Error: server is running");	// Игнорирование команды
-									continue;							// при работающем сервере
-								}										//
+								if (serverThread != null && serverThread.running) {	//
+									log("Error: server is running");				// РРіРЅРѕСЂРёРІР°РЅРёРµ РєРѕРјР°РЅРґС‹,
+									continue;										// РµСЃР»Рё СЃРµСЂРІРµСЂ Р·Р°РїСѓС‰РµРЅ
+								}													//
 								
 								switch (line_args[1]) {
 									case "ip":
 										
 										log("Enter ip (without port)");
 										line = scan.nextLine().trim();
-										ip = InetAddress.getByName(line);
+										address = InetAddress.getByName(line);
 										break;
 										
 									case "port":
@@ -89,7 +91,7 @@ public class Main {
 							break;
 							
 						case "info":
-							log("Server address: " + ip.getHostAddress());
+							log("Server address: " + address.getHostAddress());
 							log("Server port: " + port);
 							log("Limit of connections: " + connectionsLimit);
 							break;
@@ -115,7 +117,7 @@ public class Main {
 		}
 	}
 	
-	// Остановка всех потоков
+	// РћСЃС‚Р°РЅРѕРІРєР° РІСЃРµС… РїРѕС‚РѕРєРѕРІ
 	private static void stopServerThread() {
 		if (serverThread != null) {
 			serverThread.running = false; 
@@ -131,18 +133,18 @@ public class Main {
 			
 	        for (ClientThread client: serverThread.clientThreads) { 	//
 	        	log("Waiting to close");								//
-	            client.close();											// Закрытие
-	            try {													// всех
-	                client.join();										// потоков
-	                log("Closed\n");									// обрабоки
-	            } catch (InterruptedException e) {						// подключений
-	                log(e.toString());									// (ClientThread)
+	            client.close();											//
+	            try {													// Р—Р°РєСЂС‹С‚РёРµ
+	                client.join();										// РїРѕС‚РѕРєРѕРІ
+	                log("Closed\n");									// РѕР±СЂР°Р±РѕС‚РєРё
+	            } catch (InterruptedException e) {						// (ClientThread)
+	                log(e.toString());									// 
 	            }														//
 	        }															//
 		}
 	}
 	
-	// Вывод в консоль
+	// Р’С‹РІРѕРґ РІ РєРѕРЅСЃРѕР»СЊ
 	public static void log(String str) {
 		System.out.println(str);
 	}
