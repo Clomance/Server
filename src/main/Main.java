@@ -52,7 +52,7 @@ public class Main {
 							serverThread.start();
 							break;
 							
-						// ��������� 
+						// Настройка
 						case "set":
 							if (len > 1) {
 								

@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Vector;
 
+
 // Флаг работы клиентских потоков (ClientThread)
 enum ClientThreadStatus{
     Waiting,
@@ -133,16 +134,16 @@ public class ServerThread extends Thread {
                      			token[i] = channel.readInt();		// Получение токенов
                      		}										//
                      		
-                     		//
-                     		// Получение данных TODO
-                     		//
+                     		Data.Request request = channel.readRequest(); // Получение данных для расчёта
                      		
                      		int index = Main.data.searchToken(token); // Проверка токена
                      		
                      		if (index != -1) {
                      			channel.writeByte(1); // Отправка положительного ответа
                      			
-                     			// Расчёт TODO
+                     			channel.writeDouble(request.result); // Отпаравка результата
+                     			
+                     			Main.data.addRequest(index, request); // Сохранение запроса в истории
                      		}
                      		else {
                      			channel.writeByte(0); // Отправка отрицательного ответа
@@ -164,12 +165,16 @@ public class ServerThread extends Thread {
                      			index = Main.data.sign_up(login, password, token); // Регистрация
                      		}
                      		
-                     		if (index != -1) {
+                     		if (index != -1) { // Успешный вход
                      			channel.writeByte(1); // Отправка положительного ответа
                      			
                      			for (int token: token) {		//
                      				channel.writeInt(token);	// Отправка токена
                      			}								//
+                     			
+                     			Data.History history = Main.data.getHistory(index);	// Оправка истории
+                     			channel.writeHistory(history);						//
+
                      		}
                      		else {
                      			channel.writeByte(0); // Отправка отрицательного ответа
