@@ -1,4 +1,6 @@
 package main;
+import main.Data.Request;
+
 import static main.Main.tokenSize;
 import static main.Main.log;
 import static main.Main.connectionsLimit;
@@ -26,6 +28,8 @@ public class ServerThread extends Thread {
     private ServerSocket serverSocket = null; // Канал, к которому подключаются клиенты
     boolean running = false; // Флаг работы сервера: true - запущен, false - отключён
     
+    Socket client;
+    
     @Override
     public void run(){
         running = true;
@@ -51,7 +55,7 @@ public class ServerThread extends Thread {
             while (running){
             	
                 try {
-                    Socket client = serverSocket.accept(); // Ожидание подключений
+                    client = serverSocket.accept(); // Ожидание подключений
                     log("Connected");
 
                     try{
@@ -91,17 +95,18 @@ public class ServerThread extends Thread {
     public class ClientThread extends Thread {
     	private String login; // Логин клиента
     	private String password; // Пароль клиента
+    	private int index; // Нормер профиля в базе данных
     	
         private int ID; // Номер в массиве потоков (ServerThread.clientThreads)
-        private String ID_str; // Номер в виде строки (для удобства)
+        String ID_str; // Номер в виде строки (для удобства)
 
-        private Socket socket; // Канал - к нему подключается клиент
+        Socket socket; // Канал - к нему подключается клиент
         private ClientServerChannel channel; // Канал для передачи данных
         
-        private ClientThreadStatus status = ClientThreadStatus.Waiting; // Флаг работы
+        ClientThreadStatus status = ClientThreadStatus.Waiting; // Флаг работы
 
-        byte task; // Задача
-        Integer[] token = new Integer[tokenSize]; // Токен
+        private byte task; // Задача
+        private Integer[] token = new Integer[tokenSize]; // Токен
         
         ClientThread(int ID){
             this.ID = ID;
@@ -123,62 +128,82 @@ public class ServerThread extends Thread {
                      	channel = new ClientServerChannel(socket); // Создание канала
                      	task = channel.readByte(); // Получение задачи
                      	
-                     	
                      	//									//
                      	// | Обработка и выполнение задач | //
                      	// v							  v	//
                      	
-                     	if (task == 2) { // Задача - расчёт
-                     		
-                     		for (int i = 0; i < tokenSize; i++) {	//
-                     			token[i] = channel.readInt();		// Получение токенов
-                     		}										//
-                     		
-                     		Data.Request request = channel.readRequest(); // Получение данных для расчёта
-                     		
-                     		int index = Main.data.searchToken(token); // Проверка токена
-                     		
-                     		if (index != -1) {
-                     			channel.writeByte(1); // Отправка положительного ответа
+                     	switch (task) {
+                     		case 0: // Вход
                      			
-                     			channel.writeDouble(request.result); // Отпаравка результата
+                     			token = Main.tokenGen.getToken(); // Генерация токена
                      			
-                     			Main.data.addRequest(index, request); // Сохранение запроса в истории
-                     		}
-                     		else {
-                     			channel.writeByte(0); // Отправка отрицательного ответа
-                     		}
-                     	}
-                     	else { // Задачи- вход, регистрация (0/1 соответственно)
-                     		
-                     		token = Main.tokenGen.getToken(); // Генерация токена
-                     		
-                     		login = channel.readString();
-                     		password = channel.readString();
-                     		
-                     		int index;
-                     		
-                     		if (task == 0) {
-                     			index = Main.data.sign_in(login, password); // Вход
-                     		}
-                     		else {
-                     			index = Main.data.sign_up(login, password, token); // Регистрация
-                     		}
-                     		
-                     		if (index != -1) { // Успешный вход
-                     			channel.writeByte(1); // Отправка положительного ответа
+                     			login = channel.readString();		// Получение логина
+                         		password = channel.readString();	// и пароля
+                         		
+                         		index = Main.data.sign_in(login, password); // Вход
+                         		
+                         		if (index == -1) {
+                         			channel.writeByte(0); // Отправка отрицательного ответа
+                         		}
+                         		else {
+                         			channel.writeByte(1); // Отправка положительного ответа
+                         			
+                             		for (int token: token) {		//
+                         				channel.writeInt(token);	// Отправка токена
+                         			}								//
+                             		
+                             		Data.History history = Main.data.getHistory(index);	// Оправка истории
+                         			channel.writeHistory(history);						//
+                         		}
+                         		
+                     			break;
                      			
-                     			for (int token: token) {		//
-                     				channel.writeInt(token);	// Отправка токена
-                     			}								//
+                     		case 1: // Регистрация
                      			
-                     			Data.History history = Main.data.getHistory(index);	// Оправка истории
-                     			channel.writeHistory(history);						//
-
-                     		}
-                     		else {
-                     			channel.writeByte(0); // Отправка отрицательного ответа
-                     		}
+                     			token = Main.tokenGen.getToken(); // Генерация токена
+                     			
+                     			login = channel.readString();		// Получение логина
+                         		password = channel.readString();	// и пароля
+                         		
+                         		index = Main.data.sign_up(login, password, token); // Регистрация
+                         		
+                         		if (index == -1) {
+                         			channel.writeByte(0); // Отправка отрицательного ответа
+                         		}
+                         		else {
+                         			channel.writeByte(1); // Отправка положительного ответа
+                         			
+                         			for (int token: token) {		//
+                         				channel.writeInt(token);	// Отправка токена
+                         			}								//
+                         		}
+                         		
+                     			break;
+                     			
+                     		case 2: // Расчёт
+                     			
+                     			for (int i = 0; i < tokenSize; i++) {	//
+                         			token[i] = channel.readInt();		// Получение токенов
+                         		}										//
+                         		
+                         		Request request = channel.readRequest(); // Получение данных для расчёта
+                         		
+                         		int index = Main.data.searchToken(token); // Проверка токена
+                         		
+                         		if (index == -1) {
+                         			channel.writeByte(0); // Отправка отрицательного ответа
+                         		}
+                         		else {
+                         			channel.writeByte(1); // Отправка положительного ответа
+                         			
+                         			channel.writeDouble(request.result); // Отпаравка результата
+                         			
+                         			Main.data.addRequest(index, request); // Сохранение запроса в истории
+                         		}
+                     			break;
+                     			
+                     		default:
+                     			break;
                      	}
                      	
                      	channel.flush(); // Ожидания отправки данных
@@ -200,20 +225,6 @@ public class ServerThread extends Thread {
         void handle(Socket client){
             this.socket = client;
             status = ClientThreadStatus.Running;
-        }
-
-        // Остановка потока
-        void close(){
-            log("Closing clientThread " + ID_str);
-            status = ClientThreadStatus.Shutting;
-            if (socket != null){
-                try{
-                    socket.close();
-                }
-                catch(Exception e){
-                	log(e.toString());
-                }
-            }
         }
     }
 }

@@ -1,10 +1,11 @@
 package main;
+import main.Data.Request;
+
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Calendar;
 
 public class ClientServerChannel {
 	private DataOutputStream output;
@@ -41,19 +42,21 @@ public class ClientServerChannel {
     	output.writeInt(date.day);
     }
     
-    void writeRequest(Data.Request request) throws IOException{
+    void writeRequest(Request request) throws IOException{
     	output.writeDouble(request.deposit);
     	output.writeDouble(request.percents);
     	
     	writeDate(request.period[0]);
     	writeDate(request.period[1]);
     	
+    	output.writeBoolean(request.capitalization);
+    	
     	output.writeDouble(request.result);
     }
     
     void writeHistory(Data.History history) throws IOException{
     	output.writeInt(history.size());
-    	for (Data.Request request: history) {
+    	for (Request request: history) {
     		writeRequest(request);
     	}
     }
@@ -94,16 +97,15 @@ public class ClientServerChannel {
     	return new Data.Date(year, month, day);
     }
     
-    Data.Request readRequest() throws  IOException{
+    Request readRequest() throws  IOException{
     	double deposit = input.readDouble();
     	double percents = input.readDouble();
     	
-    	Data.Date[] period = new Data.Date[2];
+    	Data.Date[] period = new Data.Date[] {readDate(), readDate()};
     	
-    	period[0] = readDate();
-    	period[1] = readDate();
+    	boolean capitalization = input.readBoolean();
     	
-    	return  new Data.Request(deposit, percents, period);
+    	return  new Data.Request(deposit, percents, period, capitalization);
   
     }
 }

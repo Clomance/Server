@@ -1,10 +1,11 @@
 package main;
+import main.ServerThread.ClientThread;
+
+import static main.Main.log;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Scanner;
-
-import main.ServerThread.ClientThread;
 
 public class Main {
 	static InetAddress address; // Адрес сервера
@@ -131,16 +132,31 @@ public class Main {
 			
 			log("Closing clientThreads...");
 			
-	        for (ClientThread client: serverThread.clientThreads) { 	//
-	        	log("Waiting to close");								//
-	            client.close();											//
-	            try {													// Закрытие
-	                client.join();										// потоков
-	                log("Closed\n");									// обработки
-	            } catch (InterruptedException e) {						// (ClientThread)
-	                log(e.toString());									// 
-	            }														//
-	        }															//
+			// Перебор всех потоков - передача сообщения о закрытии
+	        for (ClientThread client: serverThread.clientThreads) {
+	        	log("Closing clientThread " + client.ID_str);
+	        	client.status = ClientThreadStatus.Shutting; // Установка флага в закрытие потока
+	        	
+	        	if (client.socket != null){
+	                try{
+	                	client.socket.close();
+	                }
+	                catch(Exception e){
+	                	log(e.toString());
+	                }
+	            }
+	        }
+	        
+	        // Цикл ожидания закрытия потоков
+	        for (ClientThread client: serverThread.clientThreads) {
+	        	try {
+	                client.join(); // Ожидание завершения потока
+	                log("Closed\n");
+	            }
+	            catch (InterruptedException e) {
+	                log(e.toString());
+	            }
+	        }
 		}
 	}
 	
