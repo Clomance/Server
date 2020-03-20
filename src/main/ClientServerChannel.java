@@ -1,6 +1,6 @@
 package main;
 import main.Data.Request;
-
+import main.Data.Date;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -89,23 +89,23 @@ public class ClientServerChannel {
     	return str;
     }
     
-    Data.Date readDate() throws IOException{
+    Date readDate() throws IOException{
     	int year = input.readInt();
     	int month = input.readInt();
     	int day = input.readInt();
     	
-    	return new Data.Date(year, month, day);
+    	return new Date(year, month, day);
     }
     
     Request readRequest() throws  IOException{
     	double deposit = input.readDouble();
     	double percents = input.readDouble();
     	
-    	Data.Date[] period = new Data.Date[] {readDate(), readDate()};
+    	Date[] period = new Date[] {readDate(), readDate()};
     	
     	boolean capitalization = input.readBoolean();
     	
-    	return  new Data.Request(deposit, percents, period, capitalization);
+    	return  new Request(deposit, percents, period, capitalization);
   
     }
 }

@@ -1,8 +1,6 @@
 package main;
 import main.ServerThread.ClientThread;
 
-import static main.Main.log;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Scanner;
