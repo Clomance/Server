@@ -114,7 +114,7 @@ public class Main {
 										}
 				
 										for (int i = 0; i < data.len(); i++) {
-											System.out.printf(" - %d\n logins - %s\n password - %s", i, data.logins.get(i), data.passwords.get(i));
+											System.out.printf(">- %d\n logins - %s\n password - %s\n", i, data.logins.get(i), data.passwords.get(i));
 										}
 										break;
 								}

@@ -19,6 +19,7 @@ public class FileSystem {
 	//Загрузка данных пользователей
 	boolean loadData() {
 		Main.log("Loading data");
+		
 		File loginsFile = new File("logins");
 		File passwordsFile = new File("passwords");
 		File historiesFile = new File("histories");
