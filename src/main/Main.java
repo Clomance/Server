@@ -19,8 +19,16 @@ public class Main {
 	
 	
 	public static void main(String[] args) {
+		{
+			FileSystem files = new FileSystem();
+			if (!files.loadData()) {
+				log("FileSystemError");
+				return;
+			}
+		}
+		
 		try {
-			address = InetAddress.getByName("192.168.0.100");
+			address = InetAddress.getByName("192.168.0.101");
 		} catch (UnknownHostException ignored) {}
 		
 		Scanner scan = new Scanner(System.in);
@@ -88,18 +96,42 @@ public class Main {
 							}
 							
 							break;
-							
+						// Основная инфа о сервере
 						case "info":
 							log("Server address: " + address.getHostAddress());
 							log("Server port: " + port);
 							log("Limit of connections: " + connectionsLimit);
 							break;
+						
+						// Показать определённую информацию сервера
+						case "show":
+							if (len > 1) {
+								switch (line_args[1]) {
+									case "mains":
+										if (data.len() == 0) {
+											log("No data");
+											break;
+										}
+				
+										for (int i = 0; i < data.len(); i++) {
+											System.out.printf(" - %d\n logins - %s\n password - %s", i, data.logins.get(i), data.passwords.get(i));
+										}
+										break;
+								}
+							}
+							else {
+								log("show [arg]\n" + "args:\n -> mains - logins and passwords");
+							}
 							
+							break;
 						case "stop":
 							log("Stopping...");
 							scan.close();
 							
 							stopServerThread();
+							
+							FileSystem files = new FileSystem();
+							files.save();
 							
 							log("Stopped");
 							return;

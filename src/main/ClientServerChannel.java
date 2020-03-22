@@ -49,7 +49,7 @@ public class ClientServerChannel {
     	writeDate(request.period[0]);
     	writeDate(request.period[1]);
     	
-    	output.writeBoolean(request.capitalization);
+    	output.writeByte(request.capitalization);
     	
     	output.writeDouble(request.result);
     }
@@ -103,7 +103,7 @@ public class ClientServerChannel {
     	
     	Date[] period = new Date[] {readDate(), readDate()};
     	
-    	boolean capitalization = input.readBoolean();
+    	byte capitalization = input.readByte();
     	
     	return  new Request(deposit, percents, period, capitalization);
   

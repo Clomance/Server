@@ -6,16 +6,29 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Data {
 	private ReentrantLock lock = new ReentrantLock(); // Флаг для синхронизации
 	
-	private Vector<String> logins = new Vector<>(); // Логины
-	private Vector<String> passwords = new Vector<>(); // Пароли
-	private Vector<Integer[]> tokens = new Vector<>(); // Токены
+	Vector<String> logins = new Vector<>(); // Логины
+	Vector<String> passwords = new Vector<>(); // Пароли
+	Vector<Integer[]> tokens = new Vector<>(); // Токены
 	
-	private Vector<History> history = new Vector<>(); // История запросов
+	Vector<History> history = new Vector<>(); // История запросов
 	
+	// Количество профилей
+	int len() {
+		return logins.size();
+	}
+	
+	// Добавиление профиля
+	void addProfile(String login, String password, Integer[] token, History history) {
+		logins.add(login);
+		passwords.add(password);
+		tokens.add(token);
+		this.history.add(history);
+	}
 	
 	// Авторизация
 	int sign_in(String login, String password) {
 		lock.lock();
+		
 		for (int i = 0; i < logins.size(); i++) {
 			if (logins.get(i).compareTo(login) == 0) {
 				if (passwords.get(i).compareTo(password) == 0) {
@@ -28,6 +41,7 @@ public class Data {
 				}
 			}
 		}
+		
 		lock.unlock();
 		return -1;
 	}
@@ -35,22 +49,18 @@ public class Data {
 	// Регистрация
 	int sign_up(String login, String password, Integer[] token) {
 		lock.lock();
+		int len = logins.size();
 		
-		for (int i = 0; i < logins.size(); i++) {
+		for (int i = 0; i < len; i++) {
 			if (logins.get(i).compareTo(login) == 0) {
 				lock.unlock();
 				return -1;
 			}
 		}
-		int len = logins.size();
 		
-		logins.add(login);			//
-		passwords.add(password);	// Создание нового
-		tokens.add(token);			// профиля
-		history.add(new History()); //
+		addProfile(login, password, token, new History(1)); // Создание нового профиля
 		
 		lock.unlock();
-		
 		return len;
 	}
 	
@@ -62,6 +72,7 @@ public class Data {
 	// Поиск и проверка токена
 	int searchToken(Integer[] token) {
 		lock.lock();
+		
 		for (int i = 0; i < tokens.size(); i++) {
 			Integer[] tmp = tokens.get(i);
 			int counter = 0;
@@ -76,6 +87,7 @@ public class Data {
 				return i;
 			}
 		}
+		
 		lock.unlock();
 		return -1;
 	}
@@ -106,11 +118,11 @@ public class Data {
 		double deposit;
 		double percents;
 		Date[] period;
-		boolean capitalization;
+		byte capitalization;
 		// Доп. поля TODO
 		double result;
 		
-		Request(double deposit, double percents, Date[] period, boolean capitalization){
+		Request(double deposit, double percents, Date[] period, byte capitalization){
 			this.deposit = deposit;
 			this.percents = percents;
 			this.period = period;
@@ -118,19 +130,51 @@ public class Data {
 			
 			result = compute();
 		}
+
+		Request(double deposit, double percents, Date[] period, byte capitalization, double result){
+			this.deposit = deposit;
+			this.percents = percents;
+			this.period = period;
+			this.capitalization = capitalization;
+			
+			this.result = result;
+		}
 		
 		// Расчёт
 		double compute() {
-			result = 0.0;
-			//
-			// Место для формулы TODO
-			//
+			
+			switch (capitalization) {
+				case 0: // Без капитализации
+					//
+					// Место для формулы TODO
+					//
+					break;
+					
+				case 1: // Ежемесячная капитализация
+					//
+					// Место для формулы TODO
+					//
+					break;
+					
+				case 2: // Ежеквартальная капитализация
+					//
+					// Место для формулы TODO
+					//
+					break;
+				default:
+					result = 0.0;
+					break;
+			}
 			return result;
 		}
 	}
 	
 	// История запросов
 	static class History extends Vector<Request>{
+		History(int len) {
+			
+			this.ensureCapacity(len);
+		}
 		private static final long serialVersionUID = 1L;
 		
 	}
