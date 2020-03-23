@@ -38,8 +38,8 @@ public class ClientServerChannel {
     
     void writeDate(Data.Date date) throws IOException{
     	output.writeInt(date.year);
-    	output.writeInt(date.month);
-    	output.writeInt(date.day);
+    	output.writeByte(date.month);
+    	output.writeByte(date.day);
     }
     
     void writeRequest(Request request) throws IOException{
@@ -91,8 +91,8 @@ public class ClientServerChannel {
     
     Date readDate() throws IOException{
     	int year = input.readInt();
-    	int month = input.readInt();
-    	int day = input.readInt();
+    	byte month = input.readByte();
+    	byte day = input.readByte();
     	
     	return new Date(year, month, day);
     }

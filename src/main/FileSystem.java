@@ -101,8 +101,8 @@ public class FileSystem {
 	
 	Date readDate(DataInputStream file) throws IOException{
 		int year = file.readInt();
-		int month = file.readInt();
-		int day = file.readInt();
+		byte month = file.readByte();
+		byte day = file.readByte();
 		return new Date(year, month, day);
 	}
 	
@@ -138,8 +138,8 @@ public class FileSystem {
 	
 	void writeDate(DataOutputStream file, Date date) throws IOException{
 		file.writeInt(date.year);
-		file.writeInt(date.month);
-		file.writeInt(date.day);
+		file.writeByte(date.month);
+		file.writeByte(date.day);
 	}
 	
 	void writeRequest(DataOutputStream file, Request request) throws IOException{
