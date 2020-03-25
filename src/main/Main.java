@@ -114,8 +114,22 @@ public class Main {
 										}
 				
 										for (int i = 0; i < data.len(); i++) {
-											System.out.printf(">- %d\n logins - %s\n password - %s\n", i, data.logins.get(i), data.passwords.get(i));
+											System.out.printf("-> %d\n logins - %s\n password - %s\n", i, data.logins.get(i), data.passwords.get(i));
 										}
+										break;
+									case "tokens":
+										if (data.len() == 0) {
+											log("No data");
+											break;
+										}
+				
+										for (int i = 0; i < data.len(); i++) {
+											Integer[] token = data.tokens.get(i);
+											System.out.printf("-> %d\n logins - %s\n token - %d, %d\n", i, data.logins.get(i), token[0], token[1]);
+										}
+										break;
+									default:
+										log("No such argumant");
 										break;
 								}
 							}

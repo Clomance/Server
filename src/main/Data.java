@@ -1,5 +1,6 @@
 package main;
 
+import java.util.Calendar;
 import java.util.Vector;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -111,6 +112,12 @@ public class Data {
 			this.month = month;
 			this.day = day;
 		}
+		
+		Calendar toCalendar() {
+			Calendar c = Calendar.getInstance();
+			c.set(year,month, day);
+			return c;
+		}
 	}
 	
 	// Запрос
@@ -142,27 +149,43 @@ public class Data {
 		
 		// Расчёт
 		double compute() {
+			result = 0.0;
+			Calendar date1c = period[0].toCalendar();
 			
+			Calendar date2c = period[1].toCalendar();
+			
+			if (!date1c.before(date2c)) {
+				return result;
+			}
+			
+			long data1_millis = date1c.getTimeInMillis();       //
+            long data2_millis = date2c.getTimeInMillis();       //
+
+            long dateResult = data2_millis - data1_millis;
+            double days = dateResult / (24 * 60 * 60 * 1000);
+            
 			switch (capitalization) {
 				case 0: // Без капитализации
-					//
-					// Место для формулы TODO
-					//
+
+					result = deposit + deposit * percents * days / 365;
+					
 					break;
 					
 				case 1: // Ежемесячная капитализация
-					//
-					// Место для формулы TODO
-					//
+					
+					double monthes = days / 30;
+					result = deposit * Math.pow(1 + percents * 30 / 365 / 100, monthes);
 					break;
 					
 				case 2: // Ежеквартальная капитализация
-					//
-					// Место для формулы TODO
-					//
+					
+					
+		            double quartal = days / 91;
+		            
+		            result = deposit * Math.pow(1 + percents / 400, quartal);
+
 					break;
 				default:
-					result = 0.0;
 					break;
 			}
 			return result;

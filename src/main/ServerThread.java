@@ -148,6 +148,8 @@ public class ServerThread extends Thread {
                          		else {
                          			channel.writeByte(1); // Отправка положительного ответа
                          			
+                         			Main.data.setToken(index, token); // Установка токена
+                         			
                              		for (int token: token) {		//
                          				channel.writeInt(token);	// Отправка токена
                          			}								//
