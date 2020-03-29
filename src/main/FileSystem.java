@@ -9,14 +9,67 @@ import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 
 public class FileSystem {
 	
-	//Загрузка данных пользователей
+	// Загрузка настроек, true - настройки загружены
+	boolean loadSettings() {
+		File settingsFile = new File("settings");
+		try {
+			if (settingsFile.createNewFile()) {
+				return false;
+			}
+		}
+		catch (Exception e) {
+			Main.log(e.toString());
+			return false;
+		}
+		try {
+			DataInputStream settingsStream = new DataInputStream(new FileInputStream(settingsFile));
+			
+			Main.address = InetAddress.getByName(readString(settingsStream));
+			Main.port = Integer.parseInt(readString(settingsStream));
+			Main.connectionsLimit = Integer.parseInt(readString(settingsStream));
+			
+			settingsStream.close();
+		} 
+		catch (Exception e) {
+			Main.log(e.toString());
+			return false;
+		}
+		return true;
+	}
+	
+	// Сохранение настроек
+	void saveSettings() {
+		File settingsFile = new File("settings");
+	
+		try {
+			DataOutputStream settingsStream = new DataOutputStream(new FileOutputStream(settingsFile));
+			String line = Main.address.getHostAddress();
+			
+			writeString(settingsStream, line);
+			
+			line = String.valueOf(Main.port);
+			writeString(settingsStream, line);
+			
+			line = String.valueOf(Main.connectionsLimit);
+			writeString(settingsStream, line);
+			
+			settingsStream.close();
+		} 
+		catch (Exception e) {
+			Main.log(e.toString());
+		}
+	}
+	
+	//Загрузка данных пользователей, true - завершено без ошибок
 	boolean loadData() {
 		Main.log("Loading data");
 		
@@ -31,7 +84,8 @@ public class FileSystem {
 			passwordsFile.createNewFile();
 			
 			historiesFile.createNewFile();
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			Main.log(e.toString());
 			return false;
 		}

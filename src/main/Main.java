@@ -25,11 +25,13 @@ public class Main {
 				log("FileSystemError");
 				return;
 			}
+			if (!files.loadSettings()) {
+				try {
+					address = InetAddress.getByName("192.168.0.101");
+				} catch (UnknownHostException ignored) {}
+			}
 		}
 		
-		try {
-			address = InetAddress.getByName("192.168.0.101");
-		} catch (UnknownHostException ignored) {}
 		
 		Scanner scan = new Scanner(System.in);
 		String line = null;
@@ -146,6 +148,7 @@ public class Main {
 							
 							FileSystem files = new FileSystem();
 							files.save();
+							files.saveSettings();
 							
 							log("Stopped");
 							return;
