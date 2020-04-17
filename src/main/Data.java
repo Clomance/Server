@@ -168,21 +168,18 @@ public class Data {
 				case 0: // Без капитализации
 
 					result = deposit + deposit * percents * days / 365;
-					
 					break;
 					
 				case 1: // Ежемесячная капитализация
 					
-					double monthes = days / 30;
+					double monthes = Math.abs((days / 30));
 					result = deposit * Math.pow(1 + percents * 30 / 365 / 100, monthes);
 					break;
 					
 				case 2: // Ежеквартальная капитализация
 					
-					
-		            double quartal = days / 91;
-		            
-		            result = deposit * Math.pow(1 + percents / 400, quartal);
+		            		double quartal = Math.abs(days / 90);
+		            		result = deposit * Math.pow(1 + percents / 400, quartal);
 
 					break;
 				default:
