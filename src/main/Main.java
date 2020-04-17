@@ -48,13 +48,17 @@ public class Main {
 				if (len > 0) {
 					switch (line_args[0]) {
 					
-						case "help":
-							log("   start\n   set\n   info\n   stop");
+						case "помощь":
+							log("   запутить\n   установить\n   инфо\n   остановить \n   показать");
 							break;
 							
-						case "start":
+						case "запустить":
+							if (len > 1) {
+								log("Команда не принимает аргументы");
+								continue;
+							}
 							if (serverThread != null && serverThread.running) {	//
-								log("Error: server is already running");		// Игноривание команды,
+								log("Ошибка: сервер уже запущен");		// Игноривание команды,
 								continue;										// если сервер запущен
 							}													//
 							serverThread = new ServerThread();
@@ -62,86 +66,92 @@ public class Main {
 							break;
 							
 						// Настройка
-						case "set":
-							if (len > 1) {
+						case "установить":
+							if (len > 2) {
 								
 								if (serverThread != null && serverThread.running) {	//
-									log("Error: server is running");				// Игноривание команды,
+									log("Ошибка: нельзя изменить, когда сервер запущен");				// Игноривание команды,
 									continue;										// если сервер запущен
 								}													//
 								
 								switch (line_args[1]) {
-									case "ip":
-										
-										log("Enter ip (without port)");
-										line = scan.nextLine().trim();
+									case "адрес":
+										// Установка адреса сервера
+										line = line_args[2].trim();
 										address = InetAddress.getByName(line);
 										break;
 										
-									case "port":
-										
-										log("Enter port");
-										line = scan.nextLine().trim();
+									case "порт":
+										// Установка порта сервера
+										line = line_args[2].trim();
 										port = Integer.parseInt(line, 10);
 										break;
 										
-									case "conAmount":
-										
-										log("Enter limit of connections");
-										line = scan.nextLine().trim();
+									case "колВоПодключений":
+										// Установка максимального количества подключений
+										line = line_args[2].trim();
 										connectionsLimit = Integer.parseInt(line, 10);
 										break;
 								}
 							}
 							else {
-								log("set [arg]\n" + "args: ip, port, conAmount");
+								log("установить [поле] [значение]\n" + "Поля: адрес, порт, колВоПодключений");
 							}
 							
 							break;
 						// Основная инфа о сервере
-						case "info":
-							log("Server address: " + address.getHostAddress());
-							log("Server port: " + port);
-							log("Limit of connections: " + connectionsLimit);
+						case "инфо":
+							log("Адрес сервера: " + address.getHostAddress());
+							log("Порт сервера: " + port);
+							log("Максимальное количество подключений: " + connectionsLimit);
 							break;
 						
 						// Показать определённую информацию сервера
-						case "show":
+						case "показать":
 							if (len > 1) {
 								switch (line_args[1]) {
-									case "mains":
+									case "главное":
 										if (data.len() == 0) {
-											log("No data");
+											log("Нет данных");
 											break;
 										}
 				
 										for (int i = 0; i < data.len(); i++) {
-											System.out.printf("-> %d\n logins - %s\n password - %s\n", i, data.logins.get(i), data.passwords.get(i));
+											System.out.printf("-> %d\n логин - %s\n пароль - %s\n", i, data.logins.get(i), data.passwords.get(i));
 										}
 										break;
-									case "tokens":
+									case "токены":
 										if (data.len() == 0) {
-											log("No data");
+											log("Нет данных");
 											break;
 										}
 				
 										for (int i = 0; i < data.len(); i++) {
 											Integer[] token = data.tokens.get(i);
-											System.out.printf("-> %d\n logins - %s\n token - %d, %d\n", i, data.logins.get(i), token[0], token[1]);
+											System.out.printf("-> %d\n логин - %s\n токен - %d, %d\n", i, data.logins.get(i), token[0], token[1]);
 										}
 										break;
+									case "авторы":
+										log("<--->Оскар Хисматуллин - основа сервера\n<--->Станислав Короленко - консоль сервера\n<--->Илья Исаев - функции расчёта\n<--->Тимур Шайхинуров - тестирование и отчётная деятельность");
+										break;
 									default:
-										log("No such argumant");
+										log("Не верный аргумент");
 										break;
 								}
 							}
 							else {
-								log("show [arg]\n" + "args:\n -> mains - logins and passwords");
+								log("показать [аргуменет]\n" 
+										+ "аргументы:\n -> главное - Логины и пароли\n"
+										+ "токены -> Токены");
 							}
 							
 							break;
-						case "stop":
-							log("Stopping...");
+						case "остановить":
+							if (len > 1) {
+								log("Команда не принимает аргументы");
+								continue;
+							}
+							log("Завершение...");
 							scan.close();
 							
 							stopServerThread();
@@ -150,11 +160,11 @@ public class Main {
 							files.save();
 							files.saveSettings();
 							
-							log("Stopped");
+							log("Сервер остановлен");
 							return;
 							
 						default:
-							log("No such command");
+							log("Нет такой команды");
 							break;
 					}
 				}
@@ -177,11 +187,11 @@ public class Main {
 				log(e.toString());
 			}
 			
-			log("Closing clientThreads...");
+			log("Закрытие клиентских потоков");
 			
 			// Перебор всех потоков - передача сообщения о закрытии
 	        for (ClientThread client: serverThread.clientThreads) {
-	        	log("Closing clientThread " + client.ID_str);
+	        	log("Закрытие клиентского потока " + client.ID_str);
 	        	client.status = ClientThreadStatus.Shutting; // Установка флага в закрытие потока
 	        	
 	        	if (client.socket != null){
@@ -198,7 +208,7 @@ public class Main {
 	        for (ClientThread client: serverThread.clientThreads) {
 	        	try {
 	                client.join(); // Ожидание завершения потока
-	                log("Closed\n");
+	                log("Закрыт\n");
 	            }
 	            catch (InterruptedException e) {
 	                log(e.toString());
