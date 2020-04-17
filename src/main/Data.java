@@ -167,7 +167,7 @@ public class Data {
 			switch (capitalization) {
 				case 0: // Без капитализации
 
-					result = deposit + deposit * percents * days / 365;
+					result = deposit + deposit * percents * days / 365.25;
 					break;
 					
 				case 1: // Ежемесячная капитализация
