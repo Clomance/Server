@@ -71,7 +71,7 @@ public class FileSystem {
 	
 	//Загрузка данных пользователей, true - завершено без ошибок
 	boolean loadData() {
-		Main.log("Loading data");
+		Main.log("Загрузка данных");
 		
 		File loginsFile = new File("logins");
 		File passwordsFile = new File("passwords");
@@ -118,12 +118,12 @@ public class FileSystem {
 			return false;
 		}
 		
-		Main.log("Loaded");
+		Main.log("Загружено");
 		return true;
 	}
 	
 	void save() {
-		Main.log("Saving data");
+		Main.log("Сохранение данных");
 		try {
 			DataOutputStream loginsStream = new DataOutputStream(new FileOutputStream("logins"));
 			DataOutputStream passwordsStream = new DataOutputStream(new FileOutputStream("passwords"));
@@ -141,9 +141,9 @@ public class FileSystem {
 		} 
 		catch (Exception e) {
 			Main.log(e.toString());
-			Main.log("Saving error");
+			Main.log("Ошибка сохрание");
 		}
-		Main.log("Saved");
+		Main.log("Сохранено");
 	}
 	
 	String readString(InputStream file) throws IOException {
