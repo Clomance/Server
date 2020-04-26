@@ -167,13 +167,13 @@ public class Data {
 			switch (capitalization) {
 				case 0: // Без капитализации
 
-					result = deposit + deposit * percents * days / 365.25;
+					result = deposit + deposit * percents * days / 36525;
 					break;
 					
 				case 1: // Ежемесячная капитализация
 					
 					double monthes = Math.abs((days / 30));
-					result = deposit * Math.pow(1 + percents * 30 / 365 / 100, monthes);
+					result = deposit * Math.pow(1 + percents * 30 / 36525, monthes);
 					break;
 					
 				case 2: // Ежеквартальная капитализация
