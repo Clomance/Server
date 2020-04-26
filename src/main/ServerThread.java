@@ -33,9 +33,9 @@ public class ServerThread extends Thread {
     @Override
     public void run(){
         running = true;
-        log("ServerThread started");
+        log("Запуск сервера");
         try{
-        	log("Binding...");
+        	log("Регистрация");
             
             serverSocket = new ServerSocket(Main.port, 10, Main.address); // Создание сервера, backlog - очередь ожидающий обработки клиентов
             serverSocket.setSoTimeout(500); // Установка времени ожидания подключения (в миллисекундах)
@@ -48,15 +48,14 @@ public class ServerThread extends Thread {
                 free_threads.add(i);                                //
             }                                                       //
             
-            log("Success");
-            log("Waiting for connections");
+            log("Ожидание подключений");
             
             // Цикл обработки подключений
             while (running){
             	
                 try {
                     client = serverSocket.accept(); // Ожидание подключений
-                    log("Connected");
+                    log("Получено подключение");
 
                     try{
                         int last = free_threads.size() - 1;		// Выбор свободного
@@ -66,7 +65,7 @@ public class ServerThread extends Thread {
                     catch (ArrayIndexOutOfBoundsException e){
                         client.close(); // Нет свободных потоков
                     }
-                    log("Handled");
+                    log("Обработано");
                 }
                 catch (SocketTimeoutException timeout) {
                 	continue; // Ошибка - кончилось время ожидания подключения - продолжение ожидания
@@ -88,7 +87,7 @@ public class ServerThread extends Thread {
 		}							//
         
         running = false;
-        log("ServerThread stopped");
+        log("Сервер остановлен");
     }
     
     // Клиентский поток - обрабатывает запросы клиента
@@ -115,14 +114,14 @@ public class ServerThread extends Thread {
 
         @Override
         public void run(){
-            log("ClientThread " + ID_str + " is waiting");
+            log("Клиентский поток " + ID_str + " в ожидании");
             while (status != ClientThreadStatus.Shutting){
             	
             	System.out.print(""); // Чтобы оптимизация не сломала цикл
             	
             	if (status == ClientThreadStatus.Running) { // Выполнение задачи
             		
-            		 log("ClientThread " + ID_str + " is running");
+            		 log("Клиентский поток " + ID_str + " обрабатывает");
             		 
                      try {
                      	channel = new ClientServerChannel(socket); // Создание канала
@@ -215,12 +214,12 @@ public class ServerThread extends Thread {
                      }
                      status = ClientThreadStatus.Waiting; // Флаг ожидания
 
-                     log("ClientThread " + ID_str + " is waiting");
+                     log("Клиентский поток " + ID_str + " в ожидании");
                      
                      free_threads.add(ID); // Добавление текущего потока в массив свободных
             	}
             }
-            log("ClientThread " + ID_str + " is shutting down");
+            log("Клиентский поток " + ID_str + " остановлен");
         }
 
         // Получение управления клиентом

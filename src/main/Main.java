@@ -208,7 +208,6 @@ public class Main {
 	        for (ClientThread client: serverThread.clientThreads) {
 	        	try {
 	                client.join(); // Ожидание завершения потока
-	                log("Закрыт\n");
 	            }
 	            catch (InterruptedException e) {
 	                log(e.toString());
