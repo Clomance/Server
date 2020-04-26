@@ -172,19 +172,20 @@ public class Data {
 					
 				case 1: // Ежемесячная капитализация
 					
-					double monthes = Math.abs((days / 30));
+					double monthes = Math.round((days / 30));
 					result = deposit * Math.pow(1 + percents * 30 / 36525, monthes);
 					break;
 					
 				case 2: // Ежеквартальная капитализация
 					
-		            		double quartal = Math.abs(days / 90);
+		            		double quartal = Math.round(days / 90);
 		            		result = deposit * Math.pow(1 + percents / 400, quartal);
 
 					break;
 				default:
 					break;
 			}
+			result = roundDouble(result);
 			return result;
 		}
 	}
@@ -198,5 +199,10 @@ public class Data {
 		private static final long serialVersionUID = 1L;
 		
 	}
-	
+	// Округление значений до двух знаков после запятой
+	static double roundDouble(double num) {
+		String num_str = String.format("%.2f",num);
+		num_str = num_str.replace(",", ".");
+		return Double.parseDouble(num_str);
+	}
 }
