@@ -153,14 +153,14 @@ public class FileSystem {
 		return new String(bytes);
 	}
 	
-	Date readDate(DataInputStream file) throws IOException{
+	Date readDate(DataInputStream file) throws IOException {
 		int year = file.readInt();
 		byte month = file.readByte();
 		byte day = file.readByte();
 		return new Date(year, month, day);
 	}
 	
-	Request readRequest(DataInputStream file) throws IOException  {
+	Request readRequest(DataInputStream file) throws IOException {
 		double deposit = file.readDouble();
 		double percents = file.readDouble();
 		
@@ -170,11 +170,13 @@ public class FileSystem {
 		
 		byte capitalization = file.readByte();
 		
+		byte currency = file.readByte();
+		
 		double result = file.readDouble();
-		return new Request(deposit, percents, date, capitalization, result);
+		return new Request(deposit, percents, date, capitalization, currency, result);
 	}
 	
-	History readHistory(DataInputStream file) throws IOException  {
+	History readHistory(DataInputStream file) throws IOException {
 		int len = file.readInt();
 		History history = new History(len);
 		for (int i = 0; i < len; i++) {
@@ -184,19 +186,19 @@ public class FileSystem {
 		return history;
 	}
 	
-	void writeString(OutputStream file, String str) throws IOException{
+	void writeString(OutputStream file, String str) throws IOException {
 		int len = str.length();
 		file.write(len);
 		file.write(str.getBytes(), 0, len);
 	}
 	
-	void writeDate(DataOutputStream file, Date date) throws IOException{
+	void writeDate(DataOutputStream file, Date date) throws IOException {
 		file.writeInt(date.year);
 		file.writeByte(date.month);
 		file.writeByte(date.day);
 	}
 	
-	void writeRequest(DataOutputStream file, Request request) throws IOException{
+	void writeRequest(DataOutputStream file, Request request) throws IOException {
 		file.writeDouble(request.deposit);
 		file.writeDouble(request.percents);
 		
@@ -205,10 +207,12 @@ public class FileSystem {
 		
 		file.writeByte(request.capitalization);
 		
+		file.writeByte(request.currency);
+		
 		file.writeDouble(request.result);
 	}
 	
-	void writeHistory(DataOutputStream file, History history) throws IOException{
+	void writeHistory(DataOutputStream file, History history) throws IOException {
 		int len = history.size();
 		file.writeInt(len);
 		

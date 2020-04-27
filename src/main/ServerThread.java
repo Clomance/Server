@@ -11,6 +11,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Vector;
 
+import java.time.Instant;
 
 // Флаг работы клиентских потоков (ClientThread)
 enum ClientThreadStatus{
@@ -38,7 +39,7 @@ public class ServerThread extends Thread {
         	log("Регистрация");
             
             serverSocket = new ServerSocket(Main.port, 10, Main.address); // Создание сервера, backlog - очередь ожидающий обработки клиентов
-            serverSocket.setSoTimeout(500); // Установка времени ожидания подключения (в миллисекундах)
+            serverSocket.setSoTimeout(1000); // Установка времени ожидания подключения (в миллисекундах)
 
             free_threads = new Vector<>(connectionsLimit);      	//
             clientThreads = new ClientThread[connectionsLimit]; 	//
@@ -50,8 +51,26 @@ public class ServerThread extends Thread {
             
             log("Ожидание подключений");
             
+            Instant last_update = Instant.now(); // Время последнего обновления, требуется для периодеческого обновления курса валют
+            
             // Цикл обработки подключений
             while (running){
+            	Instant now = Instant.now(); // Текущее время
+            	
+            	long seconds_passed = now.getEpochSecond() - last_update.getEpochSecond(); // Период в секундах
+            	
+            	// Если прошёл день, то курс валют обновляется
+            	if (seconds_passed == 24*60*60) {
+            		log("Обновление курса валют");
+            		if (Main.currency.update()) {
+            			log("Обновлёно");
+            		}
+            		else {
+            			log("Ошибка");
+            		}
+            		
+            		last_update = now;
+            	}
             	
                 try {
                     client = serverSocket.accept(); // Ожидание подключений

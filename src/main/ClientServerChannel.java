@@ -51,6 +51,8 @@ public class ClientServerChannel {
     	
     	output.writeByte(request.capitalization);
     	
+    	output.writeByte(request.currency);
+    	
     	output.writeDouble(request.result);
     }
     
@@ -105,7 +107,9 @@ public class ClientServerChannel {
     	
     	byte capitalization = input.readByte();
     	
-    	return  new Request(deposit, percents, period, capitalization);
+    	byte currency = input.readByte();
+    	
+    	return  new Request(deposit, percents, period, capitalization, currency);
   
     }
 }

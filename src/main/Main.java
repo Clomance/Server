@@ -17,6 +17,7 @@ public class Main {
 
 	static Data data = new Data(); // Данные пользователей
 	
+	static Currency currency = new Currency();
 	
 	public static void main(String[] args) {
 		{
@@ -32,11 +33,19 @@ public class Main {
 			}
 		}
 		
+		log("Обновление курса валют");
+		if (currency.update()) {
+			log("Обновлёно");
+		}
+		else {
+			log("Ошибка");
+			return;
+		}
 		
 		Scanner scan = new Scanner(System.in);
 		String line = null;
 		
-		log("Server Console");
+		log("Консоль сервера");
 		
 		// Цикл консоли
 		while (true) {

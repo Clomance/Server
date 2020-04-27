@@ -126,23 +126,26 @@ public class Data {
 		double percents;
 		Date[] period;
 		byte capitalization;
+		byte currency;
 		// Доп. поля TODO
 		double result;
 		
-		Request(double deposit, double percents, Date[] period, byte capitalization){
+		Request(double deposit, double percents, Date[] period, byte capitalization, byte currency){
 			this.deposit = deposit;
 			this.percents = percents;
 			this.period = period;
 			this.capitalization = capitalization;
+			this.currency = currency;
 			
 			result = compute();
 		}
 
-		Request(double deposit, double percents, Date[] period, byte capitalization, double result){
+		Request(double deposit, double percents, Date[] period, byte capitalization, byte currency, double result){
 			this.deposit = deposit;
 			this.percents = percents;
 			this.period = period;
 			this.capitalization = capitalization;
+			this.currency = currency;
 			
 			this.result = result;
 		}
