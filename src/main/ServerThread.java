@@ -51,13 +51,11 @@ public class ServerThread extends Thread {
             
             log("Ожидание подключений");
             
-            Instant last_update = Instant.now(); // Время последнего обновления, требуется для периодеческого обновления курса валют
-            
             // Цикл обработки подключений
             while (running){
             	Instant now = Instant.now(); // Текущее время
             	
-            	long seconds_passed = now.getEpochSecond() - last_update.getEpochSecond(); // Период в секундах
+            	long seconds_passed = now.getEpochSecond() - Main.currency.last_update.getEpochSecond(); // Период в секундах
             	
             	// Если прошёл день, то курс валют обновляется
             	if (seconds_passed == 24*60*60) {
@@ -69,7 +67,7 @@ public class ServerThread extends Thread {
             			log("Ошибка");
             		}
             		
-            		last_update = now;
+            		Main.currency.last_update = now;
             	}
             	
                 try {
