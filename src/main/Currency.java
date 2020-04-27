@@ -1,6 +1,7 @@
 package main;
 
 import java.net.URLConnection;
+import java.time.Instant;
 import java.net.URL;
 
 import java.io.BufferedReader;
@@ -10,6 +11,8 @@ import java.io.InputStreamReader;
 public class Currency {
 	double USD = 0.0;
 	double EUR = 0.0;
+	
+	Instant last_update = Instant.now();; // Время последнего обновления, требуется для периодеческого обновления курса валют
 	
 	public boolean update() {
 		URL url;
