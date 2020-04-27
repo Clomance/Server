@@ -1,248 +1,303 @@
 package main;
-import main.Data.Request;
+import main.ServerThread.ClientThread;
 
-import static main.Main.tokenSize;
-import static main.Main.log;
-import static main.Main.connectionsLimit;
-
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketTimeoutException;
-import java.util.Vector;
-
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Instant;
+import java.util.Scanner;
 
-// Флаг работы клиентских потоков (ClientThread)
-enum ClientThreadStatus{
-    Waiting,
-    Running,
-    Shutting
-}
 
-// Серверный поток, отвечает за обработку 
-// подключений и передачу управления клиентским потокам (ClientThread)
-public class ServerThread extends Thread {
-    private Vector<Integer> free_threads = null; // Массив свободных потоков 
-    ClientThread[] clientThreads = null; // Массив клиентских потоков
+public class Main {
+	static InetAddress address; // Адрес сервера
+	static int port = 8080; // Порт сервера
+	
+	static ServerThread serverThread; // Серверный поток (текущий поток - консоль)
+	static int connectionsLimit = 5; // Максимальное количество подключений
+	
+	final public static int tokenSize = 2; // Размер токена
+	static TokenGenerator tokenGen = new TokenGenerator(); // Генератор токенов
 
-    private ServerSocket serverSocket = null; // Канал, к которому подключаются клиенты
-    boolean running = false; // Флаг работы сервера: true - запущен, false - отключён
-    
-    Socket client;
-    
-    @Override
-    public void run(){
-        running = true;
-        log("Запуск сервера");
-        try{
-        	log("Регистрация");
-            
-            serverSocket = new ServerSocket(Main.port, 10, Main.address); // Создание сервера, backlog - очередь ожидающий обработки клиентов
-            serverSocket.setSoTimeout(1000); // Установка времени ожидания подключения (в миллисекундах)
+	static Data data = new Data(); // Данные пользователей
+	
+	static Currency currency = new Currency();
+	
+	public static void main(String[] args) {
+		{
+			FileSystem files = new FileSystem();
+			if (!files.loadData()) {
+				log("FileSystemError");
+				return;
+			}
+			if (!files.loadSettings()) {
+				try {
+					address = InetAddress.getByName("192.168.0.101");
+				} catch (UnknownHostException ignored) {}
+			}
+		}
+		
+		log("Обновление курса валют");
+		if (currency.update()) {
+			log("Обновлёно");
+		}
+		else {
+			log("Ошибка");
+			return;
+		}
+		
+		Scanner scan = new Scanner(System.in);
+		String line = null;
+		
+		log("КОНСОЛЬ СЕРВЕРА");
+		
+		// Цикл консоли
+		while (true) {
+			try {
+				line = scan.nextLine().trim();
+				String[] line_args = line.split(" ");
+				int len = line_args.length;
+				
+				for (int i = 0; i < len; i++) {
+					line_args[i] = line_args[i].trim(); // Удаление пробелов по бокам строки
+				}
+				
+				if (len > 0) {
+					switch (line_args[0]) {
+					
+						case "помощь":
+							log("   запустить\n   установить\n   инфо\n   остановить \n   показать\n   обновить");
+							break;
+							
+						case "запустить":
+							if (len > 1) {
+								log("Команда не принимает аргументы");
+								continue;
+							}
+							if (serverThread != null && serverThread.running) {	//
+								log("Ошибка: сервер уже запущен");				// Игноривание команды,
+								continue;										// если сервер запущен
+							}													//
+							serverThread = new ServerThread();
+							serverThread.start();
+							break;
+							
+						// Настройка
+						case "установить":
+							if (len > 2) {
+								
+								if (serverThread != null && serverThread.running) {			//
+									log("Ошибка: нельзя изменить, когда сервер запущен");	// Игноривание команды,
+									continue;												// если сервер запущен
+								}															//
+								
+								switch (line_args[1]) {
+									case "адрес": // Установка адреса сервера
+										line = line_args[2].trim();
+										address = InetAddress.getByName(line);
+										break;
+										
+									case "порт": // Установка порта сервера
+										line = line_args[2].trim();
+										port = Integer.parseInt(line, 10);
+										break;
+										
+									case "колВоПодключений": // Установка максимального количества подключений
+										line = line_args[2].trim();
+										connectionsLimit = Integer.parseInt(line, 10);
+										break;
+								}
+							}
+							else {
+								log("установить [поле] [значение]\n" + "Поля: адрес, порт, колВоПодключений");
+							}
+							
+							break;
+						// Основная инфа о сервере
+						case "инфо":
+							log("Адрес сервера: " + address.getHostAddress());
+							log("Порт сервера: " + port);
+							log("Максимальное количество подключений: " + connectionsLimit);
+							break;
+						
+						// Показать определённую информацию сервера
+						case "показать":
+							if (len > 1) {
+								switch (line_args[1]) {
+									case "главное":
+										
+										if (data.len() == 0) {
+											log("Нет данных");
+											break;
+										}
+				
+										for (int i = 0; i < data.len(); i++) {
+											System.out.printf("-> %d\n логин - %s\n пароль - %s\n", i, data.logins.get(i), data.passwords.get(i));
+										}
+										break;
+										
+									case "токены":
+										if (data.len() == 0) {
+											log("Нет данных");
+											break;
+										}
+				
+										for (int i = 0; i < data.len(); i++) {
+											Integer[] token = data.tokens.get(i);
+											System.out.printf("-> %d\n логин - %s\n токен - %d, %d\n", i, data.logins.get(i), token[0], token[1]);
+										}
+										break;
+										
+									case "авторов":
+										log("<---> Оскар Хисматуллин - основа сервера\n<---> Станислав Короленко - консоль сервера\n<---> Илья Исаев - функции расчёта\n<---> Тимур Шайхинуров - тестирование и отчётная деятельность");
+										break;
+										
+									case "валюту":
+										
+										break;
+										
+									default:
+										log("Не верный аргумент");
+										break;
+								}
+							}
+							else {
+								log("показать [аргуменет]\n" 
+										+ "аргументы:\n -> главное - логины и пароли\n"
+										+ "токены -> токены"
+										+ "авторов -> авторы сервера"
+										+ "валюта -> текущий курс вылют");
+							}
+							
+							break;
+							
+						case "обновить":
+							if (len < 3) {
+								log("обновить [поле]\nполя:\nкурс валют");
+								continue;
+							}
+							if (line_args[1].compareTo("курс") == 0 && line_args[2].compareTo("валют") == 0) {
+								log("Обновление валюты");
+								if (currency.update()) {
+									currency.last_update = Instant.now();
+									log("Обновлено");
+								}
+								else {
+									log("Ошибка");
+								}
+							}
+							else {
+								log("Не верный аргумент");
+							}
+							
+							break;
+							
+						case "остановить":
+							if (len > 1) {
+								log("Команда не принимает аргументы");
+								continue;
+							}
+							log("Завершение...");
+							scan.close();
+							
+							stopServerThread();
+							
+							FileSystem files = new FileSystem();
+							files.save();
+							files.saveSettings();
+							
+							log("Сервер остановлен");
+							return;
+							
+						case "crocoDev":
+							log(croco);
+							break;
+							
+						default:
+							log("Нет такой команды");
+							break;
+					}
+				}
+			}
+			catch (NumberFormatException | UnknownHostException e) {
+				log(e.toString());
+			}
+		}
+	}
+	
+	// Остановка всех потоков
+	private static void stopServerThread() {
+		if (serverThread != null) {
+			serverThread.running = false; 
 
-            free_threads = new Vector<>(connectionsLimit);      	//
-            clientThreads = new ClientThread[connectionsLimit]; 	//
-            for (int i = 0; i < connectionsLimit; i++){         	// Создание
-                clientThreads[i] = new ClientThread(i);             // клиентских
-                clientThreads[i].start();                           // потоков
-                free_threads.add(i);                                //
-            }                                                       //
-            
-            log("Ожидание подключений");
-            
-            // Цикл обработки подключений
-            while (running){
-            	Instant now = Instant.now(); // Текущее время
-            	
-            	long seconds_passed = now.getEpochSecond() - Main.currency.last_update.getEpochSecond(); // Период в секундах
-            	
-            	// Если прошёл день, то курс валют обновляется
-            	if (seconds_passed == 24*60*60) {
-            		log("Обновление курса валют");
-            		if (Main.currency.update()) {
-            			log("Обновлёно");
-            		}
-            		else {
-            			log("Ошибка");
-            		}
-            		
-            		Main.currency.last_update = now;
-            	}
-            	
-                try {
-                    client = serverSocket.accept(); // Ожидание подключений
-                    log("Получено подключение");
-
-                    try{
-                        int last = free_threads.size() - 1;		// Выбор свободного
-                        int index = free_threads.remove(last);  // потока и передача
-                        clientThreads[index].handle(client);    // ему управления
-                    }
-                    catch (ArrayIndexOutOfBoundsException e){
-                        client.close(); // Нет свободных потоков
-                    }
-                    log("Обработано");
-                }
-                catch (SocketTimeoutException timeout) {
-                	continue; // Ошибка - кончилось время ожидания подключения - продолжение ожидания
-                }
-                catch (IOException e){
-                	log(e.toString());
-                    break;
-                }
-            }
-        }
-        catch(IOException e){ // Ошибка при создании сервера
-        	log(e.toString());
-        }
-        
-        try {						//
-			serverSocket.close();	// Закрытие
-		} catch (Exception e) {		// канала для
-			e.printStackTrace();	// подключений
-		}							//
-        
-        running = false;
-        log("Сервер остановлен");
-    }
-    
-    // Клиентский поток - обрабатывает запросы клиента
-    public class ClientThread extends Thread {
-    	private String login; // Логин клиента
-    	private String password; // Пароль клиента
-    	private int index; // Нормер профиля в базе данных
-    	
-        private int ID; // Номер в массиве потоков (ServerThread.clientThreads)
-        String ID_str; // Номер в виде строки (для удобства)
-
-        Socket socket; // Канал - к нему подключается клиент
-        private ClientServerChannel channel; // Канал для передачи данных
-        
-        ClientThreadStatus status = ClientThreadStatus.Waiting; // Флаг работы
-
-        private byte task; // Задача
-        private Integer[] token = new Integer[tokenSize]; // Токен
-        
-        ClientThread(int ID){
-            this.ID = ID;
-            ID_str = String.valueOf(ID);
-        }
-
-        @Override
-        public void run(){
-            log("Клиентский поток " + ID_str + " в ожидании");
-            while (status != ClientThreadStatus.Shutting){
-            	
-            	System.out.print(""); // Чтобы оптимизация не сломала цикл
-            	
-            	if (status == ClientThreadStatus.Running) { // Выполнение задачи
-            		
-            		 log("Клиентский поток " + ID_str + " обрабатывает");
-            		 
-                     try {
-                     	channel = new ClientServerChannel(socket); // Создание канала
-                     	task = channel.readByte(); // Получение задачи
-                     	
-                     	//									//
-                     	// | Обработка и выполнение задач | //
-                     	// v							  v	//
-                     	
-                     	switch (task) {
-                     		case 0: // Вход
-                     			
-                     			token = Main.tokenGen.getToken(); // Генерация токена
-                     			
-                     			login = channel.readString();		// Получение логина
-                         		password = channel.readString();	// и пароля
-                         		
-                         		index = Main.data.sign_in(login, password); // Вход
-                         		
-                         		if (index == -1) {
-                         			channel.writeByte(0); // Отправка отрицательного ответа
-                         		}
-                         		else {
-                         			channel.writeByte(1); // Отправка положительного ответа
-                         			
-                         			Main.data.setToken(index, token); // Установка токена
-                         			
-                             		for (int token: token) {		//
-                         				channel.writeInt(token);	// Отправка токена
-                         			}								//
-                             		
-                             		Data.History history = Main.data.getHistory(index);	// Оправка истории
-                         			channel.writeHistory(history);						//
-                         		}
-                         		
-                     			break;
-                     			
-                     		case 1: // Регистрация
-                     			
-                     			token = Main.tokenGen.getToken(); // Генерация токена
-                     			
-                     			login = channel.readString();		// Получение логина
-                         		password = channel.readString();	// и пароля
-                         		
-                         		index = Main.data.sign_up(login, password, token); // Регистрация
-                         		
-                         		if (index == -1) {
-                         			channel.writeByte(0); // Отправка отрицательного ответа
-                         		}
-                         		else {
-                         			channel.writeByte(1); // Отправка положительного ответа
-                         			
-                         			for (int token: token) {		//
-                         				channel.writeInt(token);	// Отправка токена
-                         			}								//
-                         		}
-                         		
-                     			break;
-                     			
-                     		case 2: // Расчёт
-                     			
-                     			for (int i = 0; i < tokenSize; i++) {	//
-                         			token[i] = channel.readInt();		// Получение токенов
-                         		}										//
-                         		
-                         		Request request = channel.readRequest(); // Получение данных для расчёта
-                         		
-                         		int index = Main.data.searchToken(token); // Проверка токена
-                         		
-                         		if (index == -1) {
-                         			channel.writeByte(0); // Отправка отрицательного ответа
-                         		}
-                         		else {
-                         			channel.writeByte(1); // Отправка положительного ответа
-                         			
-                         			channel.writeDouble(request.result); // Отпаравка результата
-                         			
-                         			Main.data.addRequest(index, request); // Сохранение запроса в истории
-                         		}
-                     			break;
-                     			
-                     		default:
-                     			break;
-                     	}
-                     	
-                     	channel.flush(); // Ожидания отправки данных
-                     }
-                     catch (IOException e){
-                         e.printStackTrace();
-                     }
-                     status = ClientThreadStatus.Waiting; // Флаг ожидания
-
-                     log("Клиентский поток " + ID_str + " в ожидании");
-                     
-                     free_threads.add(ID); // Добавление текущего потока в массив свободных
-            	}
-            }
-            log("Клиентский поток " + ID_str + " остановлен");
-        }
-
-        // Получение управления клиентом
-        void handle(Socket client){
-            this.socket = client;
-            status = ClientThreadStatus.Running;
-        }
-    }
+			try {
+				serverThread.join();
+			}
+			catch (InterruptedException e) {
+				log(e.toString());
+			}
+			
+			log("Закрытие клиентских потоков");
+			
+			// Перебор всех потоков - передача сообщения о закрытии
+	        for (ClientThread client: serverThread.clientThreads) {
+	        	log("Закрытие клиентского потока " + client.ID_str);
+	        	client.status = ClientThreadStatus.Shutting; // Установка флага в закрытие потока
+	        	
+	        	if (client.socket != null){
+	                try{
+	                	client.socket.close();
+	                }
+	                catch(Exception e){
+	                	log(e.toString());
+	                }
+	            }
+	        }
+	        
+	        // Цикл ожидания закрытия потоков
+	        for (ClientThread client: serverThread.clientThreads) {
+	        	try {
+	                client.join(); // Ожидание завершения потока
+	            }
+	            catch (InterruptedException e) {
+	                log(e.toString());
+	            }
+	        }
+		}
+	}
+	
+	// Вывод в консоль
+	public static void log(String str) {
+		System.out.println(str);
+	}
+	
+	final static String croco = "                            ████████████████████              \r\n" + 
+			"                              ██░░░░░░░░░░░░░░░░██████        \r\n" + 
+			"                                ████▒▒▓▓██░░░░░░░░░░░░██      \r\n" + 
+			"                                          ██▒▒██░░░░░░░░██    \r\n" + 
+			"                                                ██░░░░░░██    \r\n" + 
+			"                                                ██░░░░░░░░██  \r\n" + 
+			"                                                  ██░░░░░░██  \r\n" + 
+			"                                                  ██░░░░░░██  \r\n" + 
+			"                                                  ░░░░░░  ██  \r\n" + 
+			"                                                  ▒▒░░░░░░░░██\r\n" + 
+			"                                                    ██░░░░░░██\r\n" + 
+			"██████                                              ██░░░░░░██\r\n" + 
+			"██░░████            ████████                        ██░░░░░░██\r\n" + 
+			"██░░░░░░████████████▒▒░░██░░██                  ████░░░░░░░░██\r\n" + 
+			"  ████░░░░░░░░░░░░██░░░░██░░██████          ████░░░░░░░░░░░░▒▒\r\n" + 
+			"  ██  ████░░░░░░░░░░████░░░░░░░░░░██████▓▓▒▒░░░░░░░░░░░░░░░░▒▒\r\n" + 
+			"      ██  ████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██\r\n" + 
+			"          ██  ████░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██\r\n" + 
+			"              ██  ████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██\r\n" + 
+			"                      ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██  \r\n" + 
+			"                      ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██  \r\n" + 
+			"                ██    ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██  \r\n" + 
+			"    ██  ██  ██  ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██  \r\n" + 
+			"████████████████░░░░░░░░░░██░░░░░░░░██░░░░░░░░░░██░░░░░░░░██  \r\n" + 
+			"██░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░░░██░░░░░░░░░░██░░░░░░░░██  \r\n" + 
+			"  ██████████████████████████░░░░░░░░██████████████░░░░░░░░██  \r\n" + 
+			"                            ██░░░░██              ██░░░░██    \r\n" + 
+			"                        ██████░░░░██          ▒▒████░░░░██    \r\n" + 
+			"                      ▓▓░░░░░░░░██          ▒▒░░░░░░░░██      \r\n" + 
+			"                      ████████████          ████████████  ";
+	
 }
