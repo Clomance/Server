@@ -39,7 +39,7 @@ public class Main {
 		if (currency.update()) {
 			log("Обновлёно");
 		}
-		else {
+		else {	
 			log("Ошибка");
 			return;
 		}

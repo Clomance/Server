@@ -186,7 +186,7 @@ public class ServerThread extends Thread {
                          		index = Main.data.sign_up(login, password, token); // Регистрация
                          		
                          		if (index == -1) {
-                         			channel.writeByte(0); // Отправка отрицательного ответа
+                         			channel.writeByte(0); // Отправка отрицательного ответа	
                          		}
                          		else {
                          			channel.writeByte(1); // Отправка положительного ответа
