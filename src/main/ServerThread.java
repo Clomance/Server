@@ -226,7 +226,7 @@ public class ServerThread extends Thread {
                      	
                      	channel.flush(); // Ожидания отправки данных
                      }
-                     catch (IOException e){
+                     catch (Exception e){
                          e.printStackTrace();
                      }
                      status = ClientThreadStatus.Waiting; // Флаг ожидания
